@@ -135,7 +135,60 @@ void app_deinit(void)
   /////////////////////////////////////////////////////////////////////////////
 }
 
+
+// typedef struct
+// {
+// 	uint8_t len_flags;
+// 	uint8_t type_flags;
+// 	uint8_t val_flags;
+
+// 	uint8_t len_manuf;
+// 	uint8_t type_manuf;
+// 	// First two bytes must contain the manufacturer ID (little-endian order) 
+// 	uint8_t company_LO;
+// 	uint8_t company_HI;
+
+// 	// The next bytes are freely configurable - using one byte for counter value and one byte for last button press 
+// 	uint8_t num_presses;
+// 	uint8_t last_press;
+
+// 	// length of the name AD element is variable, adding it last to keep things simple 
+// 	uint8_t len_name;
+// 	uint8_t type_name;
+
+//   // NAME_MAX_LENGTH must be sized so that total length of data does not exceed 31 bytes
+// 	char name[NAME_MAX_LENGTH]; 
+
+// 	// These values are NOT included in the actual advertising payload, just for bookkeeping 
+// 	char dummy;        // Space for null terminator
+// 	uint8_t data_size; // Actual length of advertising data
+// } CustomAdv_t;
+
+
 uint8_t ADV_header[]= {0x02,0x01,0x06,0x05,0xFF,0xAA,0xAA};
+
+uint8_t find_adv_header(uint8_t *reference, uint8_t *data)
+{
+
+  uint8_t match_counter = 0;
+  for (int i = 0; i< 7; i++)
+  {
+    if(*data++ == *reference++)
+    {
+      match_counter++;
+    }
+  }
+  
+
+  if (match_counter==7)
+  {
+    printf("Match Found \n\r");
+    return 1;
+  }
+
+  else return 0;
+  
+}
 
 /**************************************************************************//**
  * Bluetooth stack event handler.
@@ -168,20 +221,29 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
 
       case sl_bt_evt_scanner_scan_report_id:
 
-
-      printf("\n\r");
-       match_counter = 0;
-       for (int i = 0; i< 7; i++)
-       {
-         if(evt->data.evt_scanner_scan_report.data.data[i] == ADV_header[i])
-         {
-           printf("%x", evt->data.evt_scanner_scan_report.data.data[i]);
-           match_counter++;
-         }
-       }
-       //printf("match counter = %d \n\r", match_counter);
-
-       if (match_counter==7)
+      //Function to find specific Advertisement that Matches "02010605FFAAAA"   
+      //  match_counter = 0;
+      //  for (int i = 0; i< 7; i++)
+      //  {
+      //    if(evt->data.evt_scanner_scan_report.data.data[i] == ADV_header[i])
+      //    {
+      //      printf("%x", evt->data.evt_scanner_scan_report.data.data[i]);
+      //      match_counter++;
+      //    }
+      //  }
+       
+      
+      //  if (match_counter==7)
+      //  {
+      //    printf("Specific Advertisement found\r\n");
+      //    printf (" rssi:%d  \r\n", evt->data.evt_scanner_scan_report.rssi );
+      //    printf (" packet_type: %d  \r\n" ,  evt->data.evt_scanner_scan_report.packet_type);
+      //    printf (" address: %x6s \r\n" ,  evt->data.evt_scanner_scan_report.address.addr);
+      //    printf (" address_type: %d  \r\n" ,  evt->data.evt_scanner_scan_report.address_type);
+      //    printf (" bonding: %d  \r\n" ,  evt->data.evt_scanner_scan_report.bonding);
+      //    printf (" data:%s \r\n" ,  evt->data.evt_scanner_scan_report.data.data);
+      //  }
+    if (find_adv_header(&ADV_header, &evt->data.evt_scanner_scan_report.data.data))
        {
          printf("Specific Advertisement found\r\n");
          printf (" rssi:%d  \r\n", evt->data.evt_scanner_scan_report.rssi );
@@ -191,6 +253,9 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
          printf (" bonding: %d  \r\n" ,  evt->data.evt_scanner_scan_report.bonding);
          printf (" data:%s \r\n" ,  evt->data.evt_scanner_scan_report.data.data);
        }
+
+
+
      break;
 
     // case 	sl_bt_evt_scanner_legacy_advertisement_report_id:
